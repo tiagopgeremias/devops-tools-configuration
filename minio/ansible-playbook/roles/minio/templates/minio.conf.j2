@@ -1,0 +1,6 @@
+MINIO_OPTS="--address 0.0.0.0:9000 --console-address 0.0.0.0:9001"
+MINIO_VOLUMES={{ mount_point }}/object_storage_{1...4}/
+MINIO_ROOT_USER={{ minio_root_user }}
+MINIO_ROOT_PASSWORD={{ minio_root_user }}
+MINIO_PROMETHEUS_AUTH_TYPE=public
+MINIO_SERVER_URL=http://{{ minio_domain }}:9000

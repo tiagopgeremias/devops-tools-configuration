@@ -1,0 +1,35 @@
+- name: Disable SELinux
+  command: setenforce 0
+  ignore_errors: yes
+  register: disable_setenforce
+
+- name: Stop and disable firewalld.
+  systemd:
+    name: firewalld
+    enabled: no
+    state: stopped
+
+- name: Disable SELinux on reboot
+  selinux:
+    state: disabled
+  ignore_errors: yes
+  register: disable_selinux
+
+- name: Update System
+  yum:
+    name: '*'
+    state: latest
+
+- name: Reboot system
+  shell: sleep 2 && shutdown -r now
+  async: 5
+  poll: 0
+  when: disable_selinux.changed or disable_setenforce.changed
+
+- name: Reestablishing the connection with the hosts
+  wait_for_connection:
+    connect_timeout: 20
+    sleep: 5
+    delay: 5
+    timeout: 300
+  when: disable_selinux.changed or disable_setenforce.changed

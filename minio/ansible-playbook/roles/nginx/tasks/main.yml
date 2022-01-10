@@ -1,0 +1,28 @@
+---
+- name: Add Nginx repository
+  yum_repository:
+    name: Nginx
+    description: Nginx Webserver application
+    baseurl: http://nginx.org/packages/rhel/7/$basearch/
+    enabled: yes
+    gpgcheck: no
+
+- name: Install Nginx
+  yum:
+    name: nginx
+    state: present
+
+- name: Configuration file
+  template:
+    src: minio.conf.j2
+    dest: /etc/nginx/conf.d/default.conf
+    force: yes
+    backup: yes
+
+- name: Enable and start Nginx server
+  systemd:
+    name: nginx
+    state: started
+    enabled: yes
+    daemon_reload: yes
+

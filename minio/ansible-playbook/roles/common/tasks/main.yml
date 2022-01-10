@@ -1,0 +1,46 @@
+---
+
+- name: OS Configure
+  include: os_configure.yml
+
+- name: Create group "{{ app_user }}"
+  group:
+    name: "{{ app_user }}"
+    state: present
+
+- name: Create user "{{ app_user }}"
+  user:
+    name: "{{ app_user }}"
+    group: "{{ app_user }}"
+    create_home: no
+    shell: /usr/bin/false
+    system: yes
+    state: present
+
+- name: Create Min.io Paths
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+  loop:
+    - /opt/minio/
+    - /opt/minio/bin/
+    - /opt/minio/data/
+
+- name: Configure LVM Mount-Point
+  include: lvm.yml
+
+- name: Create Objects Storage
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+  loop:
+    - /opt/minio/data/object_storage_1/
+    - /opt/minio/data/object_storage_2/
+    - /opt/minio/data/object_storage_3/
+    - /opt/minio/data/object_storage_4/
