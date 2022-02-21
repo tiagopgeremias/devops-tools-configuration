@@ -1,0 +1,9 @@
+---
+
+# https://sleeplessbeastie.eu/2021/06/28/how-to-create-hadoop-cluster/
+
+- hosts: hadoop-servers
+  become: yes
+  roles:
+    - common
+    - hadoop

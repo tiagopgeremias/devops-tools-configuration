@@ -1,0 +1,97 @@
+- name: Download Hadoop
+  unarchive:
+    src: "https://dlcdn.apache.org/hadoop/common/hadoop-{{ HADOOP_VERSION }}/hadoop-{{ HADOOP_VERSION }}.tar.gz"
+    dest: "/home/{{ HADOOP_USER }}/"
+    remote_src: yes
+    validate_certs: no
+    owner: "{{ HADOOP_USER }}"
+    group: "{{ HADOOP_USER }}"
+
+- name: Create SSH directory
+  file:
+    path: "/home/{{ HADOOP_USER }}/.ssh"
+    state: directory
+    owner: "{{ HADOOP_USER }}"
+    group: "{{ HADOOP_USER }}"
+    
+
+- name: Generate an OpenSSH keypair with the default values (4096 bits, rsa)
+  community.crypto.openssh_keypair:
+    path: "/home/{{ HADOOP_USER }}/.ssh/id_rsa"
+    owner: "{{ HADOOP_USER }}"
+    group: "{{ HADOOP_USER }}"
+    mode: '0600'
+
+- name: Copy ssh-key public to authorized_keys
+  copy:
+    src: "/home/{{ HADOOP_USER }}/.ssh/id_rsa.pub"
+    dest: "/home/{{ HADOOP_USER }}/.ssh/authorized_keys"
+    owner: "{{ HADOOP_USER }}"
+    group: "{{ HADOOP_USER }}"
+    remote_src: yes
+    mode: '0600'
+
+- name: Ensure virtualenv is sourced from the .bashrc
+  blockinfile:
+    dest: "/home/{{ HADOOP_USER }}/.bashrc"
+    block: |
+      export HADOOP_HOME=/home/{{ HADOOP_USER }}/hadoop-{{ HADOOP_VERSION }}
+      export HADOOP_INSTALL=$HADOOP_HOME
+      export HADOOP_MAPRED_HOME=$HADOOP_HOME
+      export HADOOP_COMMON_HOME=$HADOOP_HOME
+      export HADOOP_HDFS_HOME=$HADOOP_HOME
+      export YARN_HOME=$HADOOP_HOME
+      export HADOOP_COMMON_LIB_NATIVE_DIR=$HADOOP_HOME/lib/native
+      export PATH=$PATH:$HADOOP_HOME/sbin:$HADOOP_HOME/bin
+      export HADOOP_OPTS="-Djava.library.path=$HADOOP_HOME/lib/native"
+      export JAVA_HOME=/usr/lib/jvm/jre-1.8.0-openjdk
+      export PATH=$JAVA_HOME/bin:$PATH
+    marker: '# {mark} SETUP HADOOP ENVIRONMENTS'
+    insertbefore: BOF
+    create: yes 
+
+- name: Create symbolic link HDFS
+  file:
+    src: /home/{{ HADOOP_USER }}/hadoop-{{ HADOOP_VERSION }}//bin/hdfs
+    dest: /usr/local/bin/hdfs
+    owner: "{{ HADOOP_USER }}"
+    group: "{{ HADOOP_USER }}"
+    state: link
+
+- name: Copy configuration files
+  template:
+    src: "{{ item['src'] }}"
+    dest: "{{ item['dest'] }}"
+    owner: "{{ HADOOP_USER }}"
+    group: "{{ HADOOP_USER }}"
+    mode: '0755'
+  loop:
+    - { "src": "core-site.xml.j2", "dest": "/home/{{ HADOOP_USER }}/hadoop-{{ HADOOP_VERSION }}/etc/hadoop/core-site.xml"}
+    - { "src": "hdfs-site.xml.j2", "dest": "/home/{{ HADOOP_USER }}/hadoop-{{ HADOOP_VERSION }}/etc/hadoop/hdfs-site.xml"}
+    - { "src": "yarn-site.xml.j2", "dest": "/home/{{ HADOOP_USER }}/hadoop-{{ HADOOP_VERSION }}/etc/hadoop/yarn-site.xml"}
+    - { "src": "mapred-site.xml.j2", "dest": "/home/{{ HADOOP_USER }}/hadoop-{{ HADOOP_VERSION }}/etc/hadoop/mapred-site.xml"}
+
+- name: Configure daemon service
+  template:
+    src: "{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    mode: '0755'
+  loop:
+    - hadoop-namenode.service
+    - hadoop-datanode.service
+    - hadoop-yarn-nodemanager.service
+    - hadoop-yarn-resourcemanger.service
+
+- name: Format Nodename
+  shell: "sudo -i -u {{ HADOOP_USER }} hdfs namenode -format"
+
+- name: Daemon reload
+  systemd:
+    name: "{{ item }}"
+    state: started
+    daemon_reload: yes
+  loop:
+    - hadoop-namenode.service
+    - hadoop-datanode.service
+    - hadoop-yarn-nodemanager.service
+    - hadoop-yarn-resourcemanger.service 

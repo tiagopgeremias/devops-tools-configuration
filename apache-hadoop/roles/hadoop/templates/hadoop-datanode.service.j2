@@ -1,0 +1,21 @@
+[Unit]
+Description=\Hadoop HDFS datanode service
+After=network-online.target 
+Requires=network-online.target
+
+[Service]
+Type=forking
+
+User=hadoop
+Group=hadoop
+
+ExecStart=/home/{{ HADOOP_USER }}/hadoop-{{ HADOOP_VERSION }}/bin/hdfs --daemon start datanode
+ExecStop=/home/{{ HADOOP_USER }}/hadoop-{{ HADOOP_VERSION }}/bin/hdfs --daemon stop datanode
+
+WorkingDirectory=/home/{{ HADOOP_USER }}/hadoop-{{ HADOOP_VERSION }}
+Environment=JAVA_HOME=/usr/lib/jvm/jre-1.8.0-openjdk
+Environment=HADOOP_HOME=/home/{{ HADOOP_USER }}/hadoop-{{ HADOOP_VERSION }}
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
