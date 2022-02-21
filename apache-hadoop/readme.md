@@ -25,3 +25,9 @@ lv_name: lv_hadoop_data
 mount_point: "{{ HADOOP_DATA }}"
 file_system: ext4
 ```
+
+## Execute playbook
+
+```sh
+ansible-playbook -i apache-hadoop/inventory/hosts.yml apache-hadoop/setup.yml
+```
