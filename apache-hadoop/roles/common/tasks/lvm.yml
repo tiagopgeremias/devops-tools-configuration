@@ -14,6 +14,11 @@
 #   Todas variaveis estao setadas em: inventory/hosts.yml
 #
 
+- name: Install LVM only in Sharding Servers
+  yum:
+    name: lvm*
+    state: present
+
 - name: Verifique Partition Exists
   shell: "ls -l {{ pvs_name }} 2> /dev/null | wc -l"
   register: part_exists
