@@ -23,7 +23,7 @@
     </property>
     <property>
         <name>yarn.resourcemanager.hostname</name>
-        <value>127.0.0.1</value>
+        <value>{{ ansible_default_ipv4.address }}</value>
     </property>
     <property>
         <name>yarn.acl.enable</name>
